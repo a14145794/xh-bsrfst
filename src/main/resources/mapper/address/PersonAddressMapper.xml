@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xhnew.st.mapper.PersonAddressMapper">
+
+    <resultMap type="com.xhnew.st.domain.PersonAddress" id="PersonAddressResult">
+        <result property="id" column="id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="name" column="name"/>
+        <result property="idType" column="id_type"/>
+        <result property="idNumber" column="id_number"/>
+        <result property="phone" column="phone"/>
+        <result property="age" column="age"/>
+        <result property="tag" column="tag"/>
+        <result property="sex" column="sex"/>
+        <result property="registrationStatus" column="registration_status"/>
+        <result property="registrationOver" column="registration_over"/>
+        <result property="address" column="address"/>
+        <result property="build" column="build"/>
+        <result property="unit" column="unit"/>
+        <result property="roomFloor" column="room_floor"/>
+        <result property="room" column="room"/>
+    </resultMap>
+
+    <select id="getIndexMessage" resultType="com.xhnew.st.domain.vo.IndexMessageVo">
+        SELECT
+        group_concat(DISTINCT only_code) AS onlyCode,
+        count( DISTINCT concat( build, '-', unit, '-', room ) ) AS roomCount,
+        count( DISTINCT ( CASE WHEN housing_types = '自住' THEN concat( build, '-', unit, '-', room ) END ) ) AS oneself,
+        count( DISTINCT ( CASE WHEN housing_types = '出租' THEN concat( build, '-', unit, '-', room ) END ) ) AS taxiNumber,
+        count( DISTINCT ( CASE WHEN housing_types = '空置' THEN concat( build, '-', unit, '-', room ) END ) ) AS vacancyNumber,
+        count( DISTINCT ( CASE WHEN housing_types = '商用' THEN concat( build, '-', unit, '-', room ) END ) ) AS businessNumber,
+        count( DISTINCT ( CASE WHEN housing_types = '其他' THEN concat( build, '-', unit, '-', room ) END ) ) AS otherSelf,
+        count(*) AS personSum
+        FROM d_person_address
+        WHERE del_flag = 0
+
+        <if test=" address != null and address !='' ">
+            AND address LIKE concat('%',#{address},'%')
+        </if>
+        <if test=" build != null and build !='' ">
+            AND (build = #{build}
+                 or build LIKE concat(#{build},'号1')
+                 or build LIKE concat(#{address},#{build},'号1')
+                 or build LIKE concat(#{build},'号')
+                 or build LIKE concat(#{address},#{build},'号')
+                 or build LIKE concat(#{build},'幢')
+                 or build LIKE concat(#{address},#{build},'幢')
+                )
+        </if>
+        <if test=" unit != null and unit !='' ">
+            AND (unit = #{unit} or build LIKE concat(#{unit},'单元')
+        </if>
+    </select>
+    <select id="getUnitRoomList" resultType="com.xhnew.st.domain.vo.UnitRoomVo">
+        SELECT
+        unit AS unit,
+        group_concat(DISTINCT room ORDER BY room ) AS rooms
+        FROM
+        d_person_address
+        where
+        del_flag = 0
+        AND room is not null
+
+        <if test=" address != null and address !='' ">
+            AND address LIKE concat('%',#{address},'%')
+        </if>
+        <if test=" build != null and build !='' ">
+            AND (build = #{build}
+            or build LIKE concat(#{build},'号1')
+            or build LIKE concat(#{address},#{build},'号1')
+            or build LIKE concat(#{build},'号')
+            or build LIKE concat(#{address},#{build},'号')
+            or build LIKE concat(#{build},'幢')
+            or build LIKE concat(#{address},#{build},'幢')
+            )
+        </if>
+        <if test=" unit != null and unit !='' ">
+            AND (unit = #{unit} or build LIKE concat(#{unit},'单元')
+        </if>
+        GROUP BY unit
+        order by unit,room
+    </select>
+    <select id="getPersonList" resultType="com.xhnew.st.domain.vo.PersonAddressVo">
+        SELECT pa.id                   AS id,
+               pa.create_time          AS createTime,
+               pa.update_time          AS updateTime,
+               pa.name                 AS name,
+               pa.id_type              AS idType,
+               pa.id_number            AS idNumber,
+               pa.phone                AS phone,
+               pa.age                  AS age,
+               pa.tag1                 AS tag,
+               pa.sex                  AS sex,
+               pa.registration_status  AS registrationStatus,
+               pa.registration_over    AS registrationOver,
+               pa.address              AS address,
+               pa.build                AS build,
+               pa.unit                 AS unit,
+               pa.room_floor           AS roomFloor,
+               pa.room                 AS room,
+               pa.tag1                 AS tag1,
+               pa.tag2                 AS tag2,
+               pa.tag3                 AS tag3,
+               pa.political_landscape  AS politicalLandscape,
+               dzxpi.residence_addr_rk AS residenceAddrRk,
+               dzxpi.native_place      AS nativePlace,
+               dzxpi.martialrkfs       AS martialrkfs,
+               dzxpi.death             AS death
+        FROM d_person_address pa
+                 left join dm_zjc_xxjd_people_info dzxpi on pa.id_number = dzxpi.cardno
+            ${ew.customSqlSegment}
+    </select>
+
+</mapper>

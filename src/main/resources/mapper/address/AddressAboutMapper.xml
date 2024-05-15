@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xhnew.st.mapper.AddressAboutMapper">
+
+    <resultMap type="com.xhnew.st.domain.AddressAbout" id="AddressAboutResult">
+        <result property="id" column="id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="buildingName" column="building_name"/>
+        <result property="buildingLocation" column="building_location"/>
+        <result property="buildingIntroduction" column="building_introduction"/>
+        <result property="buildingCategory" column="building_category"/>
+        <result property="subordinateUnits" column="subordinate_units"/>
+        <result property="phone" column="phone"/>
+        <result property="rightLevel" column="right_level"/>
+        <result property="subordinateToScene" column="subordinate_to_scene"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+    </resultMap>
+
+
+</mapper>

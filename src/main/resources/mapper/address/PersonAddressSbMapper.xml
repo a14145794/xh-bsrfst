@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xhnew.st.mapper.PersonAddressSbMapper">
+
+    <resultMap type="com.xhnew.st.domain.PersonAddressSb" id="PersonAddressSbResult">
+        <result property="id" column="id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="name" column="name"/>
+        <result property="sex" column="sex"/>
+        <result property="phone" column="phone"/>
+        <result property="idNumber" column="id_number"/>
+        <result property="national" column="national"/>
+        <result property="registrationStatus" column="registration_status"/>
+        <result property="relationshipToHouseholder" column="relationship_to_householder"/>
+        <result property="address" column="address"/>
+        <result property="build" column="build"/>
+        <result property="unit" column="unit"/>
+        <result property="roomFloor" column="room_floor"/>
+        <result property="room" column="room"/>
+        <result property="politicalLandscape" column="political_landscape"/>
+        <result property="workUnits" column="work_units"/>
+        <result property="housingTypes" column="housing_types"/>
+        <result property="populationType" column="population_type"/>
+        <result property="residentialType" column="residential_type"/>
+        <result property="leaseTime" column="lease_time"/>
+        <result property="tag1" column="tag1"/>
+        <result property="tag2" column="tag2"/>
+        <result property="tag3" column="tag3"/>
+    </resultMap>
+    <select id="getIndexMessage" resultType="com.xhnew.st.domain.vo.IndexMessageSbVo">
+        SELECT
+        group_concat(DISTINCT only_code) AS onlyCode,
+        count( DISTINCT concat( build, '-', unit, '-', room ) ) AS roomCount,
+        count( DISTINCT ( CASE WHEN housing_types = '自住' THEN concat( build, '-', unit, '-', room ) END ) ) AS oneself,
+        count( DISTINCT ( CASE WHEN housing_types = '出租' THEN concat( build, '-', unit, '-', room ) END ) ) AS taxiNumber,
+        count( DISTINCT ( CASE WHEN housing_types = '空置' THEN concat( build, '-', unit, '-', room ) END ) ) AS vacancyNumber,
+        count( DISTINCT ( CASE WHEN housing_types = '商用' THEN concat( build, '-', unit, '-', room ) END ) ) AS businessNumber,
+        count( DISTINCT ( CASE WHEN housing_types = '其他' THEN concat( build, '-', unit, '-', room ) END ) ) AS otherSelf,
+
+        -- sum( ( CASE WHEN (population_type = '常驻人口' OR population_type = '流动人口') THEN 1 ELSE 0 END ) ) AS actualPopulation,
+        count(*) AS actualPopulation,
+        sum( ( CASE WHEN population_type = '常驻人口' THEN 1 ELSE 0 END ) ) AS permanentPopulation,
+        sum( ( CASE WHEN population_type = '流动人口' THEN 1 ELSE 0 END ) ) AS floatingPopulation,
+        sum( ( CASE WHEN population_type IS NULL THEN 1 ELSE 0 END ) ) AS othersPopulation
+        FROM
+        d_person_address
+        WHERE
+        del_flag = 0
+        <if test=" address != null and address !='' ">
+            AND address LIKE concat('%',#{address},'%')
+        </if>
+        <if test=" build != null and build !='' ">
+            AND (build = #{build}
+            or build LIKE concat(#{build},'号1')
+            or build LIKE concat(#{address},#{build},'号1')
+            or build LIKE concat(#{build},'号')
+            or build LIKE concat(#{address},#{build},'号')
+            or build LIKE concat(#{build},'幢')
+            or build LIKE concat(#{address},#{build},'幢')
+            )
+        </if>
+        <if test=" unit != null and unit !='' ">
+            AND (unit = #{unit} or build LIKE concat(#{unit},'单元')
+        </if>
+    </select>
+    <select id="getUnitRoomList" resultType="com.xhnew.st.domain.vo.UnitRoomSbVo">
+        SELECT
+        unit AS unit,
+        -- group_concat( DISTINCT concat(room ,':' ,housing_types) ORDER BY room ) AS rooms2,
+        group_concat( DISTINCT concat(room ,':' ,housing_types) ORDER BY room ) AS rooms,
+        count( DISTINCT ( CASE WHEN population_type = '中共党员' THEN id_number END ) ) AS partyMember ,
+        group_concat( DISTINCT ( CASE WHEN population_type = '楼道长' THEN name END ) ) AS longCorridor ,
+        group_concat( DISTINCT ( CASE WHEN population_type = '小组长' THEN name END ) ) AS heads
+        FROM
+        d_person_address
+        WHERE
+        del_flag = 0
+        AND room IS NOT NULL
+        <if test=" address != null and address !='' ">
+            AND address LIKE concat('%',#{address},'%')
+        </if>
+        <if test=" build != null and build !='' ">
+            AND (build = #{build}
+            or build LIKE concat(#{build},'号1')
+            or build LIKE concat(#{address},#{build},'号1')
+            or build LIKE concat(#{build},'号')
+            or build LIKE concat(#{address},#{build},'号')
+            or build LIKE concat(#{build},'幢')
+            or build LIKE concat(#{address},#{build},'幢')
+            )
+        </if>
+        <if test=" unit != null and unit !='' ">
+            AND (unit = #{unit} or build LIKE concat(#{unit},'单元')
+        </if>
+        GROUP BY unit
+        order by unit,room
+    </select>
+    <select id="getPersonList" resultType="com.xhnew.st.domain.vo.PersonAddressSbVo">
+        SELECT *
+        FROM d_person_address_sb pa
+            ${ew.customSqlSegment}
+    </select>
+
+</mapper>
